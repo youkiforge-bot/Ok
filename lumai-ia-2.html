@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src *; img-src * data: blob:;">
+<meta http-equiv="X-Content-Type-Options" content="nosniff"/>
+<title>Lumai IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#06070f;--s1:#0d0f1e;--s2:#131526;--s3:#191c2e;--border:rgba(110,120,255,0.13);--a:#7B6FFF;--a2:#00CFFF;--a3:#FF6BA8;--g:#3EE09B;--text:#E6E8FF;--dim:#6A72A0;--glow:rgba(123,111,255,0.4);--sidebar:240px;--fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);height:100vh;overflow:hidden;display:flex}
+
+/* BG */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 15% 0%,rgba(123,111,255,.13) 0%,transparent 55%),radial-gradient(ellipse 55% 45% at 85% 100%,rgba(0,207,255,.08) 0%,transparent 55%)}
+.grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(123,111,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(123,111,255,.03) 1px,transparent 1px);background-size:56px 56px}
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px);animation:drift 14s ease-in-out infinite alternate}
+.o1{width:420px;height:420px;background:rgba(123,111,255,.1);top:-100px;left:140px;animation-duration:16s}
+.o2{width:300px;height:300px;background:rgba(0,207,255,.07);bottom:-70px;right:-50px;animation-duration:11s;animation-delay:-5s}
+@keyframes drift{0%{transform:translate(0,0)}100%{transform:translate(30px,22px)}}
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);height:100vh;display:flex;flex-direction:column;border-right:1px solid var(--border);background:rgba(10,11,22,.92);backdrop-filter:blur(20px);z-index:10;position:relative;transition:transform .25s ease}
+.sb-head{padding:16px 14px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-logo{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.sb-logo-ic{width:30px;height:30px;background:linear-gradient(135deg,var(--a),var(--a2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 16px var(--glow);flex-shrink:0}
+.sb-logo-name{font-family:var(--fd);font-size:1.05rem;font-weight:800;background:linear-gradient(115deg,#fff,var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.new-chat-btn{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(123,111,255,.18),rgba(0,207,255,.1));border:1px solid rgba(123,111,255,.3);border-radius:11px;padding:9px 12px;color:var(--text);font-family:var(--fb);font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s}
+.new-chat-btn:hover{background:linear-gradient(135deg,rgba(123,111,255,.28),rgba(0,207,255,.16));border-color:rgba(123,111,255,.5);box-shadow:0 0 16px rgba(123,111,255,.15)}
+.sb-section{padding:10px 14px 6px;font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.sb-list{flex:1;overflow-y:auto;padding:4px 8px 8px;scrollbar-width:thin;scrollbar-color:rgba(123,111,255,.15) transparent}
+.sb-list::-webkit-scrollbar{width:3px}
+.sb-list::-webkit-scrollbar-thumb{background:rgba(123,111,255,.15);border-radius:3px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:all .15s;border:1px solid transparent;margin-bottom:3px;position:relative}
+.sb-item:hover{background:rgba(123,111,255,.08);border-color:rgba(123,111,255,.15)}
+.sb-item.active{background:rgba(123,111,255,.13);border-color:rgba(123,111,255,.25)}
+.sb-item-icon{font-size:13px;flex-shrink:0;opacity:.7}
+.sb-item-text{flex:1;overflow:hidden}
+.sb-item-title{font-size:.78rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.sb-item-date{font-size:.65rem;color:var(--dim);margin-top:1px}
+.sb-item-del{opacity:0;background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:5px;transition:all .15s;flex-shrink:0}
+.sb-item:hover .sb-item-del{opacity:1}
+.sb-item-del:hover{background:rgba(255,90,90,.12);color:#ff8a8a}
+.sb-empty{padding:20px 14px;text-align:center;color:var(--dim);font-size:.78rem;line-height:1.6}
+.sb-footer{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.sb-storage{display:flex;align-items:center;justify-content:space-between;font-size:.7rem;color:var(--dim)}
+.sb-storage-bar{height:3px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:5px;overflow:hidden}
+.sb-storage-fill{height:100%;background:linear-gradient(90deg,var(--a),var(--a2));border-radius:3px;transition:width .4s}
+.sb-clear-btn{font-size:.68rem;color:var(--dim);background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:var(--fb);transition:all .15s}
+.sb-clear-btn:hover{color:#ff8a8a;border-color:rgba(255,90,90,.3);background:rgba(255,90,90,.06)}
+
+/* ── MAIN ─────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;position:relative;z-index:1}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--border);background:rgba(13,15,30,.8);backdrop-filter:blur(24px);flex-shrink:0;gap:10px}
+.hdr-left{display:flex;align-items:center;gap:10px}
+.menu-btn{width:32px;height:32px;background:transparent;border:1px solid var(--border);border-radius:9px;color:var(--dim);cursor:pointer;display:none;align-items:center;justify-content:center;font-size:16px;transition:all .15s;flex-shrink:0}
+.menu-btn:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.hdr-title{font-family:var(--fd);font-size:1rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.hdr-title.dim{color:var(--dim);font-weight:400;font-size:.88rem}
+.status{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:5px 11px;font-size:.73rem;color:var(--dim);flex-shrink:0}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* CAPS */
+.caps{display:flex;align-items:center;gap:6px;padding:8px 22px;border-bottom:1px solid var(--border);background:rgba(13,15,30,.5);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.caps::-webkit-scrollbar{display:none}
+.cap{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:30px;padding:4px 10px;font-size:.68rem;color:var(--dim);white-space:nowrap;transition:all .2s}
+.cap:hover{border-color:rgba(123,111,255,.35);color:var(--text);background:rgba(123,111,255,.07)}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:22px 22px 10px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:rgba(123,111,255,.15) transparent}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:rgba(123,111,255,.15);border-radius:3px}
+
+/* WELCOME */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:30px 20px}
+.wic{width:62px;height:62px;background:linear-gradient(135deg,var(--a),var(--a2));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 40px var(--glow),0 0 80px rgba(0,207,255,.1);animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.welcome h1{font-family:var(--fd);font-size:1.9rem;font-weight:800;background:linear-gradient(115deg,#fff 0%,var(--a2) 50%,var(--a) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1}
+.welcome p{color:var(--dim);font-size:.9rem;max-width:380px;line-height:1.65;font-weight:300}
+.suggs{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:500px;width:100%;margin-top:4px}
+.sug{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;color:var(--text);font-family:var(--fb);font-size:.81rem;transition:all .2s;line-height:1.4}
+.sug:hover{border-color:rgba(123,111,255,.4);background:rgba(123,111,255,.08);transform:translateY(-2px);box-shadow:0 4px 20px rgba(123,111,255,.12)}
+.sug .si{font-size:14px;display:block;margin-bottom:4px}
+.sug .st{color:var(--dim);font-size:.72rem;margin-top:1px;display:block}
+
+/* BUBBLES */
+.msg{display:flex;gap:11px;animation:min .3s cubic-bezier(.23,1.01,.32,1) forwards;opacity:0}
+@keyframes min{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse}
+.av{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.msg.assistant .av{background:linear-gradient(135deg,var(--a),var(--a2));box-shadow:0 0 10px var(--glow)}
+.msg.user .av{background:var(--s2);border:1px solid var(--border)}
+.mc{max-width:76%;display:flex;flex-direction:column;gap:4px}
+.mn{font-size:.66rem;font-weight:600;letter-spacing:.06em;color:var(--dim);text-transform:uppercase}
+.msg.user .mn{text-align:right}
+.bbl{padding:12px 16px;border-radius:14px;font-size:.9rem;line-height:1.72;word-break:break-word}
+.msg.assistant .bbl{background:var(--s2);border:1px solid var(--border);border-top-left-radius:3px}
+.msg.user .bbl{background:linear-gradient(135deg,var(--a),#9B8FFF);border-top-right-radius:3px;color:#fff;box-shadow:0 4px 20px rgba(123,111,255,.25)}
+.bbl code{background:rgba(0,0,0,.32);padding:2px 6px;border-radius:5px;font-family:monospace;font-size:.82em;color:var(--a2)}
+.bbl pre{background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;overflow-x:auto;margin:8px 0}
+.bbl pre code{background:none;padding:0;color:#a8ffea;font-size:.82em}
+.bbl h1,.bbl h2,.bbl h3{font-family:var(--fd);margin:9px 0 3px;color:var(--a2)}
+.bbl ul,.bbl ol{padding-left:17px;margin:4px 0}
+.bbl li{margin:2px 0}
+.bbl strong{color:#fff;font-weight:600}
+.bbl a{color:var(--a2);text-decoration:underline}
+.bbl blockquote{border-left:3px solid var(--a);padding-left:10px;margin:6px 0;color:var(--dim);font-style:italic}
+.bbl hr{border:none;border-top:1px solid var(--border);margin:8px 0}
+.bbl table{border-collapse:collapse;width:100%;margin:7px 0;font-size:.84em}
+.bbl th,.bbl td{border:1px solid var(--border);padding:6px 9px;text-align:left}
+.bbl th{background:rgba(123,111,255,.1);color:var(--a2);font-weight:600}
+.mtag{display:inline-flex;align-items:center;gap:4px;font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-bottom:6px}
+.mtag.web{background:rgba(0,207,255,.1);color:var(--a2);border:1px solid rgba(0,207,255,.2)}
+.mtag.image{background:rgba(255,107,168,.1);color:var(--a3);border:1px solid rgba(255,107,168,.2)}
+
+/* COPY */
+.copy-row{display:flex;justify-content:flex-end;margin-top:4px}
+.copy-btn{display:flex;align-items:center;gap:4px;background:transparent;border:1px solid var(--border);border-radius:7px;padding:3px 9px;color:var(--dim);font-size:.68rem;cursor:pointer;font-family:var(--fb);transition:all .15s}
+.copy-btn:hover{border-color:rgba(123,111,255,.35);color:var(--text);background:rgba(123,111,255,.07)}
+.copy-btn.ok{color:var(--g);border-color:rgba(62,224,155,.3)}
+
+/* IMAGE */
+.img-res{border-radius:11px;max-width:280px;display:block;border:1px solid var(--border);margin-top:8px;cursor:pointer;transition:transform .2s}
+.img-res:hover{transform:scale(1.02)}
+.img-shimmer{width:240px;height:240px;border-radius:11px;background:linear-gradient(90deg,var(--s2) 25%,rgba(123,111,255,.08) 50%,var(--s2) 75%);background-size:200% 100%;animation:shim 1.5s infinite;margin-top:8px}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.img-link{display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:rgba(123,111,255,.1);border:1px solid rgba(123,111,255,.25);border-radius:9px;padding:7px 13px;color:var(--a2);font-size:.8rem;text-decoration:none;transition:all .2s}
+.img-link:hover{background:rgba(123,111,255,.18)}
+
+/* TYPING */
+.typing{display:flex;align-items:center;gap:5px;padding:12px 16px;background:var(--s2);border:1px solid var(--border);border-radius:14px;border-top-left-radius:3px;width:fit-content}
+.td{width:6px;height:6px;border-radius:50%;background:var(--a);animation:bounce 1.2s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.18s}.td:nth-child(3){animation-delay:.36s}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-5px);opacity:1}}
+.errbbl{background:rgba(255,90,90,.08);border:1px solid rgba(255,90,90,.18);color:#ff8a8a;border-radius:12px;padding:10px 14px;font-size:.86rem}
+
+/* API KEY MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:20px}
+.modal{background:var(--s2);border:1px solid rgba(123,111,255,.3);border-radius:20px;padding:28px 26px;max-width:400px;width:100%;box-shadow:0 0 60px rgba(123,111,255,.2),0 0 120px rgba(0,207,255,.1);animation:modIn .3s cubic-bezier(.23,1.01,.32,1)}
+@keyframes modIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-ic{width:52px;height:52px;background:linear-gradient(135deg,var(--a),var(--a2));border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 16px;box-shadow:0 0 25px var(--glow)}
+.modal h2{font-family:var(--fd);font-size:1.25rem;font-weight:800;text-align:center;margin-bottom:8px;background:linear-gradient(115deg,#fff,var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal p{color:var(--dim);font-size:.82rem;text-align:center;line-height:1.6;margin-bottom:18px}
+.modal-inp-wrap{background:var(--s1);border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px;transition:border-color .2s}
+.modal-inp-wrap:focus-within{border-color:rgba(123,111,255,.5);box-shadow:0 0 0 3px rgba(123,111,255,.07)}
+.modal-inp-wrap span{font-size:16px;flex-shrink:0}
+#apikey-inp{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--fb);font-size:.88rem;letter-spacing:.05em}
+#apikey-inp::placeholder{color:var(--dim);letter-spacing:normal}
+.eye-btn{background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:2px;flex-shrink:0;transition:color .15s}
+.eye-btn:hover{color:var(--text)}
+.modal-hint{font-size:.73rem;color:var(--dim);text-align:center;margin-bottom:18px;line-height:1.5}
+.modal-hint a{color:var(--a2)}
+.modal-save-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--a),var(--a2));border:none;border-radius:12px;color:#fff;font-family:var(--fd);font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 18px var(--glow)}
+.modal-save-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--glow)}
+.modal-save-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.modal-err{background:rgba(255,90,90,.09);border:1px solid rgba(255,90,90,.2);color:#ff8a8a;border-radius:9px;padding:9px 13px;font-size:.78rem;text-align:center;margin-bottom:10px;display:none}
+.api-key-badge{display:flex;align-items:center;gap:6px;background:rgba(62,224,155,.07);border:1px solid rgba(62,224,155,.2);border-radius:8px;padding:4px 10px;font-size:.7rem;color:var(--g);cursor:pointer;transition:all .15s;flex-shrink:0}
+.api-key-badge:hover{background:rgba(62,224,155,.13)}
+.api-key-badge.warn{background:rgba(255,90,90,.07);border-color:rgba(255,90,90,.25);color:#ff8a8a}
+
+/* INPUT */
+.inp-area{padding:12px 22px 20px;border-top:1px solid var(--border);background:rgba(13,15,30,.88);backdrop-filter:blur(22px);flex-shrink:0}
+.inp-wrap{display:flex;align-items:flex-end;gap:8px;background:var(--s2);border:1.5px solid var(--border);border-radius:16px;padding:8px 10px 8px 14px;transition:border-color .2s,box-shadow .2s}
+.inp-wrap:focus-within{border-color:rgba(123,111,255,.5);box-shadow:0 0 0 3px rgba(123,111,255,.06),0 0 20px rgba(123,111,255,.09)}
+.itool{width:28px;height:28px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--dim);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative;flex-shrink:0}
+.itool:hover{background:rgba(255,255,255,.05);color:var(--text);border-color:var(--border)}
+.itool.on{background:rgba(123,111,255,.15);color:var(--a);border-color:rgba(123,111,255,.3)}
+.itool .tip{position:absolute;bottom:115%;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--border);color:var(--text);font-size:.68rem;padding:3px 7px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;font-family:var(--fb)}
+.itool:hover .tip{opacity:1}
+#inp{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--fb);font-size:.91rem;resize:none;max-height:140px;min-height:22px;line-height:1.5;scrollbar-width:none;padding:3px 0}
+#inp::placeholder{color:var(--dim)}
+#inp::-webkit-scrollbar{display:none}
+.sbtn{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--a),var(--a2));border:none;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;box-shadow:0 4px 14px var(--glow)}
+.sbtn:hover:not(:disabled){transform:scale(1.07);box-shadow:0 6px 20px var(--glow)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.inp-ft{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 0;font-size:.67rem;color:var(--dim)}
+.mbadge{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.03);border:1px solid var(--border);padding:3px 9px;border-radius:20px}
+.mbdot{width:5px;height:5px;border-radius:50%;background:var(--g)}
+
+/* MOBILE OVERLAY */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9;backdrop-filter:blur(2px)}
+
+@media(max-width:700px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:20;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.show{display:block}
+  .menu-btn{display:flex}
+  .hdr,.caps,.inp-area,.msgs{padding-left:14px;padding-right:14px}
+  .welcome h1{font-size:1.55rem}
+  .suggs{grid-template-columns:1fr}
+  .mc{max-width:90%}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="grid"></div>
+<div class="orb o1"></div><div class="orb o2"></div>
+<div class="sb-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">
+      <div class="sb-logo-ic">✦</div>
+      <span class="sb-logo-name">Lumai IA</span>
+    </div>
+    <button class="new-chat-btn" onclick="newChat()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova conversa
+    </button>
+  </div>
+  <div class="sb-section">Histórico</div>
+  <div class="sb-list" id="sb-list">
+    <div class="sb-empty" id="sb-empty">Nenhuma conversa salva ainda.<br>Comece a conversar! 💬</div>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-storage">
+      <span id="storage-label">0 conversas · 0 KB</span>
+      <button class="sb-clear-btn" onclick="clearAll()">Limpar tudo</button>
+    </div>
+    <div class="sb-storage-bar"><div class="sb-storage-fill" id="storage-fill" style="width:0%"></div></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="hdr">
+    <div class="hdr-left">
+      <button class="menu-btn" onclick="toggleSidebar()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="hdr-title dim" id="hdr-title">Nova conversa</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="api-key-badge warn" id="key-badge" onclick="showKeyModal()">🔑 API Key</div>
+      <div class="status"><span class="sdot"></span>Online</div>
+    </div>
+  </header>
+
+  <div class="caps">
+    <div class="cap"><span>🌐</span>Web</div>
+    <div class="cap"><span>🎨</span>Imagens IA</div>
+    <div class="cap"><span>🕐</span>Horário Real</div>
+    <div class="cap"><span>💻</span>Código</div>
+    <div class="cap"><span>📊</span>Análise</div>
+    <div class="cap"><span>✍️</span>Criação</div>
+    <div class="cap"><span>🔢</span>Matemática</div>
+    <div class="cap"><span>🌍</span>Tradução</div>
+  </div>
+
+  <div class="msgs" id="msgs">
+    <div class="welcome" id="wel">
+      <div class="wic">✦</div>
+      <h1>Olá, sou a Lumai</h1>
+      <p>IA completa com busca na web, geração de imagens, respostas em tempo real e histórico salvo.</p>
+      <div class="suggs">
+        <button class="sug" onclick="sug('Que horas são agora em Brasília?')"><span class="si">🕐</span>Horário atual<span class="st">Data e hora em tempo real</span></button>
+        <button class="sug" onclick="sug('Crie uma imagem de uma cidade futurista ao pôr do sol')"><span class="si">🎨</span>Gerar imagem<span class="st">Descrição → arte visual</span></button>
+        <button class="sug" onclick="sug('Quais as últimas notícias de tecnologia?')"><span class="si">🌐</span>Notícias do dia<span class="st">Busca web em tempo real</span></button>
+        <button class="sug" onclick="sug('Escreva um código Python para ordenar uma lista')"><span class="si">💻</span>Escrever código<span class="st">Qualquer linguagem</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="inp-area">
+    <div class="inp-wrap">
+      <div class="itool on" style="cursor:default"><span>🌐</span><span class="tip">Web sempre ativo</span></div>
+      <button class="itool" id="imgbtn" onclick="toggleImg()"><span>🎨</span><span class="tip">Modo Imagem</span></button>
+      <textarea id="inp" placeholder="Pergunte qualquer coisa..." rows="1" onkeydown="hkey(event)" oninput="ar(this)"></textarea>
+      <button class="sbtn" id="sbtn" onclick="send()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="inp-ft">
+      <div class="mbadge"><span class="mbdot"></span>claude-sonnet-4-20250514 · Web · Imagens</div>
+      <span>Enter enviar · Shift+Enter linha</span>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apikey-modal">
+  <div class="modal">
+    <div class="modal-ic">🔑</div>
+    <h2>Chave da API</h2>
+    <p>Para usar a Lumai IA, você precisa de uma chave da API da Anthropic. É gratuito para começar!</p>
+    <div class="modal-err" id="modal-err"></div>
+    <div class="modal-inp-wrap">
+      <span>🔐</span>
+      <input type="password" id="apikey-inp" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <button class="eye-btn" onclick="toggleEye()" id="eye-btn">👁️</button>
+    </div>
+    <div class="modal-hint">
+      Obtenha sua chave gratuita em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
+      🔒 Salva apenas no seu dispositivo
+    </div>
+    <button class="modal-save-btn" id="modal-save-btn" onclick="saveApiKey()">Salvar e Começar ✦</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let chatHistory = [];      // API messages [{role,content}]
+let currentChatId = null;
+let busy = false;
+let imgMode = false;
+
+// ══════════════════════════════════════════
+// STORAGE — localStorage for persistence
+// ══════════════════════════════════════════
+const STORE_KEY = 'lumai_chats';
+
+function loadChats() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function saveChats(chats) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(chats)); } catch {}
+}
+
+function getCurrentChats() { return loadChats(); }
+
+function saveCurrent() {
+  if (!currentChatId || chatHistory.length === 0) return;
+  const chats = loadChats();
+  const msgs = document.getElementById('msgs');
+
+  // Snapshot DOM messages for display
+  const domMsgs = [];
+  msgs.querySelectorAll('.msg').forEach(m => {
+    const isUser = m.classList.contains('user');
+    const bbl = m.querySelector('.bbl');
+    const imgEl = m.querySelector('.img-res');
+    domMsgs.push({
+      role: isUser ? 'user' : 'assistant',
+      html: bbl ? bbl.innerHTML : '',
+      imgUrl: imgEl ? imgEl.src : null
+    });
+  });
+
+  // Title from first user message
+  const firstUser = chatHistory.find(m => m.role === 'user');
+  const title = firstUser
+    ? String(firstUser.content).slice(0, 42) + (String(firstUser.content).length > 42 ? '…' : '')
+    : 'Conversa';
+
+  chats[currentChatId] = {
+    id: currentChatId,
+    title,
+    date: Date.now(),
+    history: chatHistory.slice(-30),
+    dom: domMsgs
+  };
+  saveChats(chats);
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const chats = loadChats();
+  const list = document.getElementById('sb-list');
+  const empty = document.getElementById('sb-empty');
+  const keys = Object.keys(chats).sort((a, b) => (chats[b].date || 0) - (chats[a].date || 0));
+
+  // Clear existing items (keep empty msg)
+  list.querySelectorAll('.sb-item').forEach(e => e.remove());
+
+  if (keys.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    keys.forEach(id => {
+      const c = chats[id];
+      const el = document.createElement('div');
+      el.className = 'sb-item' + (id === currentChatId ? ' active' : '');
+      el.dataset.id = id;
+      const d = new Date(c.date);
+      const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      el.innerHTML = `
+        <span class="sb-item-icon">💬</span>
+        <div class="sb-item-text">
+          <div class="sb-item-title">${esc(c.title)}</div>
+          <div class="sb-item-date">${dateStr}</div>
+        </div>
+        <button class="sb-item-del" onclick="deleteChat(event,'${id}')" title="Apagar">✕</button>`;
+      el.addEventListener('click', (e) => { if (!e.target.closest('.sb-item-del')) loadChat(id); });
+      list.appendChild(el);
+    });
+  }
+
+  // Storage info
+  const raw = localStorage.getItem(STORE_KEY) || '';
+  const kb = (raw.length / 1024).toFixed(1);
+  const pct = Math.min((raw.length / (4 * 1024 * 1024)) * 100, 100).toFixed(1);
+  document.getElementById('storage-label').textContent = `${keys.length} conversa${keys.length !== 1 ? 's' : ''} · ${kb} KB`;
+  document.getElementById('storage-fill').style.width = pct + '%';
+}
+
+function loadChat(id) {
+  const chats = loadChats();
+  const c = chats[id];
+  if (!c) return;
+  currentChatId = id;
+  chatHistory = c.history || [];
+
+  // Rebuild DOM
+  const msgs = document.getElementById('msgs');
+  msgs.innerHTML = '';
+
+  c.dom.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'msg ' + m.role;
+    const av = m.role === 'user' ? '👤' : '✦';
+    const name = m.role === 'user' ? 'Você' : 'Lumai IA';
+    d.innerHTML = `<div class="av">${av}</div><div class="mc"><div class="mn">${name}</div><div class="bbl">${m.html}</div>${m.role === 'assistant' ? `<div class="copy-row"><button class="copy-btn" onclick="copyText(this,this.closest('.mc').querySelector('.bbl').innerText)">📋 Copiar</button></div>` : ''}</div>`;
+    if (m.imgUrl) {
+      const img = d.querySelector('.img-res');
+      if (img) { img.src = m.imgUrl; img.onclick = () => window.open(m.imgUrl, '_blank'); }
+    }
+    msgs.appendChild(d);
+  });
+
+  document.getElementById('hdr-title').textContent = c.title;
+  document.getElementById('hdr-title').classList.remove('dim');
+  renderSidebar();
+  closeSidebar();
+  setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
+}
+
+function deleteChat(e, id) {
+  e.stopPropagation();
+  const chats = loadChats();
+  delete chats[id];
+  saveChats(chats);
+  if (currentChatId === id) newChat();
+  else renderSidebar();
+}
+
+function clearAll() {
+  if (!confirm('Apagar todas as conversas? Esta ação não pode ser desfeita.')) return;
+  localStorage.removeItem(STORE_KEY);
+  newChat();
+}
+
+function newChat() {
+  currentChatId = 'chat_' + Date.now();
+  chatHistory = [];
+  imgMode = false;
+  document.getElementById('imgbtn').classList.remove('on');
+  document.getElementById('inp').placeholder = 'Pergunte qualquer coisa...';
+
+  const msgs = document.getElementById('msgs');
+  msgs.innerHTML = `
+    <div class="welcome" id="wel">
+      <div class="wic">✦</div>
+      <h1>Olá, sou a Lumai</h1>
+      <p>IA completa com busca na web, geração de imagens, respostas em tempo real e histórico salvo.</p>
+      <div class="suggs">
+        <button class="sug" onclick="sug('Que horas são agora em Brasília?')"><span class="si">🕐</span>Horário atual<span class="st">Data e hora em tempo real</span></button>
+        <button class="sug" onclick="sug('Crie uma imagem de uma cidade futurista ao pôr do sol')"><span class="si">🎨</span>Gerar imagem<span class="st">Descrição → arte visual</span></button>
+        <button class="sug" onclick="sug('Quais as últimas notícias de tecnologia?')"><span class="si">🌐</span>Notícias do dia<span class="st">Busca web em tempo real</span></button>
+        <button class="sug" onclick="sug('Escreva um código Python para ordenar uma lista')"><span class="si">💻</span>Escrever código<span class="st">Qualquer linguagem</span></button>
+      </div>
+    </div>`;
+
+  document.getElementById('hdr-title').textContent = 'Nova conversa';
+  document.getElementById('hdr-title').classList.add('dim');
+  renderSidebar();
+  closeSidebar();
+}
+
+// ══════════════════════════════════════════
+// SIDEBAR TOGGLE (mobile)
+// ══════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function toggleImg() {
+  imgMode = !imgMode;
+  document.getElementById('imgbtn').classList.toggle('on', imgMode);
+  document.getElementById('inp').placeholder = imgMode ? 'Descreva a imagem que deseja criar...' : 'Pergunte qualquer coisa...';
+}
+function ar(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; }
+function hkey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+function sug(t) { document.getElementById('inp').value = t; ar(document.getElementById('inp')); send(); }
+function scrl() { const m = document.getElementById('msgs'); m.scrollTop = m.scrollHeight; }
+
+// ══════════════════════════════════════════
+// REAL-TIME CONTEXT
+// ══════════════════════════════════════════
+function rtCtx() {
+  const now = new Date();
+  const brt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const p = n => String(n).padStart(2, '0');
+  const days = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  return `[DADOS EM TEMPO REAL — horário capturado do dispositivo do usuário agora]
+Horário em Brasília (BRT/UTC-3): ${p(brt.getHours())}:${p(brt.getMinutes())}:${p(brt.getSeconds())}
+Data: ${days[brt.getDay()]}, ${brt.getDate()} de ${months[brt.getMonth()]} de ${brt.getFullYear()}
+UTC: ${now.toISOString()}`;
+}
+
+function buildSys() {
+  return `Você é Lumai IA, uma assistente superinteligente, profissional e amigável criada para ajudar com qualquer tarefa.
+Responda SEMPRE em português do Brasil. Formate com markdown quando útil. Use emojis com moderação.
+
+${rtCtx()}
+
+REGRAS:
+1. Horário/data: use os dados acima diretamente. Informe a hora EXATA sem rodeios.
+2. Busca web: use a ferramenta web_search SEMPRE que precisar de informação atual (notícias, preços, eventos, pessoas, clima, etc). NUNCA diga que não tem acesso à internet — você TEM.
+3. Código: formate em blocos com a linguagem indicada.
+4. Seja completo, preciso e útil.`;
+}
+
+// ══════════════════════════════════════════
+// DETECT IMAGE REQUEST
+// ══════════════════════════════════════════
+function isImg(t) {
+  if (imgMode) return true;
+  const kw = ['crie uma imagem','cria uma imagem','gere uma imagem','gera uma imagem',
+    'desenhe','desenha','ilustre','gere uma foto','cria uma foto','crie uma arte',
+    'faça uma imagem','faz uma imagem','gera um desenho','crie um desenho',
+    'create an image','generate an image','draw me','make an image'];
+  return kw.some(w => t.toLowerCase().includes(w));
+}
+
+// ══════════════════════════════════════════
+// SEND
+// ══════════════════════════════════════════
+async function send() {
+  const el = document.getElementById('inp');
+  const txt = el.value.trim();
+  if (!txt || busy) return;
+
+  // Remove welcome
+  const wel = document.getElementById('wel');
+  if (wel) wel.remove();
+
+  // Init chat id if needed
+  if (!currentChatId) currentChatId = 'chat_' + Date.now();
+
+  el.value = ''; el.style.height = 'auto';
+  busy = true;
+  document.getElementById('sbtn').disabled = true;
+
+  addUserBbl(txt);
+  chatHistory.push({ role: 'user', content: txt });
+
+  const tid = addTyping();
+
+  try {
+    if (isImg(txt)) {
+      removeTyping(tid);
+      await doImage(txt);
+    } else {
+      const res = await doChat();
+      removeTyping(tid);
+      addAIBbl(res, 'web');
+    }
+  } catch(e) {
+    removeTyping(tid);
+    addErr(e.message || 'Erro. Tente novamente.');
+  }
+
+  busy = false;
+  document.getElementById('sbtn').disabled = false;
+
+  // Update header title
+  const firstUser = chatHistory.find(m => m.role === 'user');
+  if (firstUser) {
+    const t = String(firstUser.content).slice(0, 38) + (String(firstUser.content).length > 38 ? '…' : '');
+    document.getElementById('hdr-title').textContent = t;
+    document.getElementById('hdr-title').classList.remove('dim');
+  }
+
+  saveCurrent();
+  scrl();
+}
+
+// ══════════════════════════════════════════
+// HTTP — compatível com Android WebView
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// API KEY MANAGEMENT
+// ══════════════════════════════════════════
+const KEY_STORE = 'lumai_apikey';
+
+function getApiKey() {
+  return localStorage.getItem(KEY_STORE) || '';
+}
+
+function saveApiKey() {
+  const inp = document.getElementById('apikey-inp');
+  const key = inp.value.trim();
+  const errEl = document.getElementById('modal-err');
+  const btn = document.getElementById('modal-save-btn');
+
+  errEl.style.display = 'none';
+
+  if (!key) { showModalErr('Por favor, insira sua API Key.'); return; }
+  if (!key.startsWith('sk-ant-')) { showModalErr('Chave inválida. Deve começar com sk-ant-'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
+  // Test the key with a minimal call
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('x-api-key', key);
+  xhr.setRequestHeader('anthropic-version', '2023-06-01');
+  xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+  xhr.timeout = 15000;
+  xhr.onload = () => {
+    const d = JSON.parse(xhr.responseText || '{}');
+    if (xhr.status === 401) {
+      showModalErr('Chave inválida ou sem permissão. Verifique em console.anthropic.com');
+      btn.disabled = false; btn.textContent = 'Salvar e Começar ✦';
+    } else {
+      localStorage.setItem(KEY_STORE, key);
+      document.getElementById('apikey-modal').style.display = 'none';
+      updateKeyBadge();
+      btn.disabled = false; btn.textContent = 'Salvar e Começar ✦';
+    }
+  };
+  xhr.onerror = () => {
+    // Can't reach server — save anyway (might be offline test)
+    localStorage.setItem(KEY_STORE, key);
+    document.getElementById('apikey-modal').style.display = 'none';
+    updateKeyBadge();
+    btn.disabled = false; btn.textContent = 'Salvar e Começar ✦';
+  };
+  xhr.ontimeout = () => {
+    showModalErr('Tempo limite. Verifique sua conexão.');
+    btn.disabled = false; btn.textContent = 'Salvar e Começar ✦';
+  };
+  xhr.send(JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 10, messages: [{ role: 'user', content: 'hi' }] }));
+}
+
+function showModalErr(msg) {
+  const el = document.getElementById('modal-err');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+}
+
+function showKeyModal() {
+  const modal = document.getElementById('apikey-modal');
+  modal.style.display = 'flex';
+  const key = getApiKey();
+  if (key) document.getElementById('apikey-inp').value = key;
+}
+
+function toggleEye() {
+  const inp = document.getElementById('apikey-inp');
+  const btn = document.getElementById('eye-btn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function updateKeyBadge() {
+  const badge = document.getElementById('key-badge');
+  const key = getApiKey();
+  if (key) {
+    badge.className = 'api-key-badge';
+    badge.innerHTML = '🔑 ' + key.slice(0,8) + '…';
+  } else {
+    badge.className = 'api-key-badge warn';
+    badge.innerHTML = '🔑 API Key';
+  }
+}
+
+// ══════════════════════════════════════════
+// HTTP — compatível com Android WebView
+// ══════════════════════════════════════════
+function apiCall(payload) {
+  const key = getApiKey();
+  if (!key) { showKeyModal(); throw new Error('Configure sua API Key primeiro'); }
+
+  return new Promise((resolve, reject) => {
+    const doXHR = () => new Promise((res2, rej2) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://api.anthropic.com/v1/messages', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('x-api-key', key);
+      xhr.setRequestHeader('anthropic-version', '2023-06-01');
+      xhr.setRequestHeader('anthropic-dangerous-direct-browser-access', 'true');
+      xhr.timeout = 60000;
+      xhr.onload = () => {
+        try {
+          const d = JSON.parse(xhr.responseText);
+          if (xhr.status === 401) { showKeyModal(); rej2(new Error('API Key inválida. Atualize sua chave.')); return; }
+          if (xhr.status >= 400) rej2(new Error('API ' + xhr.status + ': ' + (d.error?.message || '')));
+          else res2(d);
+        } catch(e) { rej2(new Error('Resposta inválida da API')); }
+      };
+      xhr.onerror = () => rej2(new Error('Sem conexão. Verifique sua internet.'));
+      xhr.ontimeout = () => rej2(new Error('Tempo limite. Tente novamente.'));
+      xhr.send(JSON.stringify(payload));
+    });
+
+    // Try fetch first, fallback to XHR
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(r => {
+      if (r.status === 401) { showKeyModal(); throw new Error('API Key inválida.'); }
+      if (!r.ok) throw new Error('API ' + r.status);
+      return r.json();
+    })
+    .then(resolve)
+    .catch(() => doXHR().then(resolve).catch(reject));
+  });
+}
+
+// ══════════════════════════════════════════
+// CHAT (with web search)
+// ══════════════════════════════════════════
+async function doChat() {
+  const tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  const sys = buildSys();
+  let msgs = chatHistory.slice(-22);
+
+  let d = await apiCall({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, tools, messages: msgs });
+
+  let itr = 0;
+  while (d.stop_reason === 'tool_use' && itr < 5) {
+    itr++;
+    const tBlocks = d.content.filter(b => b.type === 'tool_use');
+    const results = tBlocks.map(b => ({ type: 'tool_result', tool_use_id: b.id, content: JSON.stringify(b.input || {}) }));
+    msgs = [...msgs, { role: 'assistant', content: d.content }, { role: 'user', content: results }];
+    d = await apiCall({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, tools, messages: msgs });
+  }
+
+  const out = d.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim()
+    || 'Não consegui gerar uma resposta. Tente reformular.';
+  chatHistory.push({ role: 'assistant', content: out });
+  return out;
+}
+
+// ══════════════════════════════════════════
+// IMAGE
+// ══════════════════════════════════════════
+async function doImage(userTxt) {
+  let prompt = userTxt;
+  try {
+    const pd = await apiCall({ model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+      messages: [{ role: 'user', content: 'Translate and optimize this image request to a detailed English prompt for AI image generation (max 100 chars, no quotes, just the prompt): "' + userTxt + '"' }] });
+    prompt = pd.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim().replace(/^["']|["']$/g,'') || prompt;
+  } catch {}
+
+  const seed = Math.floor(Math.random() * 999999);
+  const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=768&height=768&seed=' + seed + '&nologo=true&enhance=true&model=flux';
+
+  let desc = '🎨 Imagem gerada com sucesso!';
+  try {
+    const dd = await apiCall({ model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+      messages: [{ role: 'user', content: 'Você é Lumai IA. O usuário pediu: "' + userTxt + '". Escreva 1-2 frases animadas confirmando que gerou a imagem. 1-2 emojis. Em português.' }] });
+    desc = dd.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim() || desc;
+  } catch {}
+
+  chatHistory.push({ role: 'assistant', content: desc });
+  addImgBbl(desc, url);
+}
+
+// ══════════════════════════════════════════
+// DOM BUILDERS
+// ══════════════════════════════════════════
+function addUserBbl(txt) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = `<div class="av">👤</div><div class="mc"><div class="mn">Você</div><div class="bbl">${esc(txt)}</div></div>`;
+  msgs.appendChild(d); scrl();
+}
+
+function addAIBbl(txt, mode) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg assistant';
+  const tag = mode === 'web' ? `<div class="mtag web">🌐 Web</div>` : '';
+  const rawTxt = txt;
+  d.innerHTML = `
+    <div class="av">✦</div>
+    <div class="mc">
+      <div class="mn">Lumai IA</div>
+      <div class="bbl">${tag}<div>${md(txt)}</div></div>
+      <div class="copy-row"><button class="copy-btn" onclick="copyText(this,${JSON.stringify(rawTxt)})">📋 Copiar</button></div>
+    </div>`;
+  msgs.appendChild(d); scrl();
+}
+
+function addImgBbl(desc, imgUrl) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg assistant';
+  const sid = 'sh' + Date.now();
+  d.innerHTML = `
+    <div class="av">✦</div>
+    <div class="mc">
+      <div class="mn">Lumai IA</div>
+      <div class="bbl">
+        <div class="mtag image">🎨 Imagem Gerada</div>
+        <div>${md(desc)}</div>
+        <div id="${sid}" class="img-shimmer"></div>
+      </div>
+      <div class="copy-row"><button class="copy-btn" onclick="copyText(this,${JSON.stringify(desc)})">📋 Copiar</button></div>
+    </div>`;
+  msgs.appendChild(d);
+
+  setTimeout(() => {
+    const img = new Image();
+    img.onload = () => {
+      const sh = document.getElementById(sid);
+      if (sh) { img.className = 'img-res'; img.onclick = () => window.open(imgUrl,'_blank'); img.title = 'Clique para ampliar'; sh.replaceWith(img); scrl(); saveCurrent(); }
+    };
+    img.onerror = () => {
+      const sh = document.getElementById(sid);
+      if (sh) { const a = document.createElement('a'); a.href = imgUrl; a.target='_blank'; a.className='img-link'; a.innerHTML='🖼️ Ver imagem gerada →'; sh.replaceWith(a); scrl(); }
+    };
+    img.src = imgUrl;
+  }, 1400);
+  scrl();
+}
+
+function addTyping() {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg assistant';
+  const id = 'ty' + Date.now(); d.id = id;
+  d.innerHTML = `<div class="av">✦</div><div class="mc"><div class="mn">Lumai IA</div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
+  msgs.appendChild(d); scrl(); return id;
+}
+function removeTyping(id) { const e = document.getElementById(id); if(e) e.remove(); }
+function addErr(msg) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg assistant';
+  d.innerHTML = `<div class="av">✦</div><div class="mc"><div class="mn">Lumai IA</div><div class="errbbl">⚠️ ${esc(msg)}</div></div>`;
+  msgs.appendChild(d); scrl();
+}
+
+// ══════════════════════════════════════════
+// COPY
+// ══════════════════════════════════════════
+function copyText(btn, text) {
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  };
+  (navigator.clipboard ? navigator.clipboard.writeText(text).catch(fallback) : Promise.resolve(fallback()))
+    .then ? null : fallback();
+  btn.classList.add('ok');
+  btn.innerHTML = '✓ Copiado!';
+  setTimeout(() => { btn.classList.remove('ok'); btn.innerHTML = '📋 Copiar'; }, 2000);
+}
+
+// ══════════════════════════════════════════
+// MARKDOWN
+// ══════════════════════════════════════════
+function md(t) {
+  return String(t)
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${esc(c.trim())}</code></pre>`)
+    .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g,'<em>$1</em>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/^\s*[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)+/g,s=>`<ul>${s}</ul>`)
+    .replace(/^\d+\. (.+)$/gm,'<li>$1</li>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\n\n+/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+}
+function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+newChat();
+renderSidebar();
+updateKeyBadge();
+
+// Show API key modal if no key saved
+if (!getApiKey()) {
+  document.getElementById('apikey-modal').style.display = 'flex';
+} else {
+  document.getElementById('apikey-modal').style.display = 'none';
+}
+
+// Enter key on API key input
+document.getElementById('apikey-inp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') saveApiKey();
+});
+</script>
+</body>
+</html>
